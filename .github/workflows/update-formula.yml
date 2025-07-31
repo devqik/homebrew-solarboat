@@ -1,0 +1,78 @@
+name: Update Formula
+
+on:
+  repository_dispatch:
+    types: [update-formula]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to update to (e.g., 0.7.3)'
+        required: true
+        type: string
+      macos_sha256:
+        description: 'SHA256 for macOS binary'
+        required: true
+        type: string
+      linux_sha256:
+        description: 'SHA256 for Linux binary'
+        required: true
+        type: string
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up variables
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+            echo "macos_sha256=${{ github.event.client_payload.macos_sha256 }}" >> $GITHUB_OUTPUT
+            echo "linux_sha256=${{ github.event.client_payload.linux_sha256 }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "macos_sha256=${{ github.event.inputs.macos_sha256 }}" >> $GITHUB_OUTPUT
+            echo "linux_sha256=${{ github.event.inputs.linux_sha256 }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update formula
+        run: |
+          VERSION="${{ steps.vars.outputs.version }}"
+          MACOS_SHA256="${{ steps.vars.outputs.macos_sha256 }}"
+          LINUX_SHA256="${{ steps.vars.outputs.linux_sha256 }}"
+          
+          # Update version
+          sed -i "s/version \".*\"/version \"$VERSION\"/" Formula/solarboat.rb
+          
+          # Update macOS SHA256
+          sed -i "/if OS.mac?/,/elsif OS.linux?/ {
+            s/sha256 \".*\"/sha256 \"$MACOS_SHA256\"/
+          }" Formula/solarboat.rb
+          
+          # Update Linux SHA256
+          sed -i "/elsif OS.linux?/,/end/ {
+            s/sha256 \".*\"/sha256 \"$LINUX_SHA256\"/
+          }" Formula/solarboat.rb
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update solarboat to v${{ steps.vars.outputs.version }}"
+          title: "Update solarboat to v${{ steps.vars.outputs.version }}"
+          body: |
+            This PR updates the solarboat formula to version `${{ steps.vars.outputs.version }}`.
+            
+            **Changes:**
+            - Version: `${{ steps.vars.outputs.version }}`
+            - macOS SHA256: `${{ steps.vars.outputs.macos_sha256 }}`
+            - Linux SHA256: `${{ steps.vars.outputs.linux_sha256 }}`
+            
+            This PR was created automatically by the update-formula workflow.
+          branch: update-solarboat-${{ steps.vars.outputs.version }}
+          delete-branch: true 

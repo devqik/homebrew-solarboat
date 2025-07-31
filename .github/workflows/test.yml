@@ -1,0 +1,44 @@
+name: Test Formula
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install formula
+        run: |
+          # Install the formula from this tap
+          brew install --formula ./Formula/solarboat.rb
+
+      - name: Test formula
+        run: |
+          # Test that the binary was installed correctly
+          brew test solarboat
+          
+          # Test that the binary can run
+          solarboat --help
+          
+          # Test that the binary version matches expected
+          solarboat --version
+
+      - name: Audit formula
+        run: |
+          # Run brew audit to check for issues
+          brew audit --strict ./Formula/solarboat.rb 

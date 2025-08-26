@@ -6,10 +6,10 @@ class Solarboat < Formula
 
     if OS.mac?
         url "https://github.com/devqik/solarboat/releases/download/v#{version}/solarboat-x86_64-apple-darwin.tar.gz"
-        sha256 "00db8b724e1db020cb8af43183e5d34d4a2bebf6dfd0cdd23a2a11bcc0913716"
+        sha256 "4b41ac916ac2c26b95d8a94061cacb5e57d54a10b6148034e53cb62d0f88b0ed"
     elsif OS.linux?
         url "https://github.com/devqik/solarboat/releases/download/v#{version}/solarboat-x86_64-unknown-linux-gnu.tar.gz"
-        sha256 "697811fbc3344d3980e080de277b80310ff5858f05ded30ff2307406ad8a1105"
+        sha256 "86456d85c21d892525f9a0a246d63b5939e477eee4ac2f487cbca4b4d0062d1c"
     end
 
     def install

@@ -1,15 +1,15 @@
 class Solarboat < Formula
     desc "Modern CLI for Infrastructure as Code and GitOps workflows"
     homepage "https://solarboat.io"
-    version "0.8.7"
+    version "0.8.8"
     license "BSD-3-Clause"
 
     if OS.mac?
         url "https://github.com/devqik/solarboat/releases/download/v#{version}/solarboat-x86_64-apple-darwin.tar.gz"
-        sha256 "4b41ac916ac2c26b95d8a94061cacb5e57d54a10b6148034e53cb62d0f88b0ed"
+        sha256 "36859f33b66e91124614b83645a76ee52d0a7f5ac408364af94c732aff31a7b9"
     elsif OS.linux?
         url "https://github.com/devqik/solarboat/releases/download/v#{version}/solarboat-x86_64-unknown-linux-gnu.tar.gz"
-        sha256 "86456d85c21d892525f9a0a246d63b5939e477eee4ac2f487cbca4b4d0062d1c"
+        sha256 "8114afad532ea510ed0cfdc885064e8cf99b4adb8fe69f4c4e3de2b9753c2cb3"
     end
 
     def install

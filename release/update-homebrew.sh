@@ -19,10 +19,10 @@ fi
 
 echo "Updating Homebrew formula for solarboat v$VERSION"
 
-# Get the repository dispatch URL
-REPO_OWNER="devqik"
-REPO_NAME="solarboat"
-DISPATCH_URL="https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches"
+# Get the repository dispatch URL (targeting the Homebrew tap repository)
+TAP_REPO_OWNER="devqik"
+TAP_REPO_NAME="homebrew-solarboat"
+DISPATCH_URL="https://api.github.com/repos/$TAP_REPO_OWNER/$TAP_REPO_NAME/dispatches"
 
 # Create the payload
 PAYLOAD=$(cat <<EOF
@@ -50,7 +50,7 @@ if [[ -n "$GITHUB_TOKEN" ]]; then
     echo ""
     echo "✅ Repository dispatch event sent successfully!"
     echo "The Homebrew formula will be updated automatically."
-    echo "Check: https://github.com/$REPO_OWNER/$REPO_NAME/actions"
+    echo "Check: https://github.com/$TAP_REPO_OWNER/$TAP_REPO_NAME/actions"
 else
     echo "⚠️  GITHUB_TOKEN environment variable not set."
     echo "You can manually trigger the update by running:"

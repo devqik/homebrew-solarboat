@@ -1,7 +1,7 @@
 class Solarboat < Formula
     desc "Modern CLI for Infrastructure as Code and GitOps workflows"
     homepage "https://solarboat.io"
-    version "0.8.8"
+    version "0.8.9"
     license "BSD-3-Clause"
 
     if OS.mac?

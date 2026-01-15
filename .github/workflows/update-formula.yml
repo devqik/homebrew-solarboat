@@ -6,15 +6,23 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to update to (e.g., 0.7.3)'
+        description: 'Version to update to (e.g., 0.8.0)'
         required: true
         type: string
-      macos_sha256:
-        description: 'SHA256 for macOS binary'
+      macos_x86_sha256:
+        description: 'SHA256 for macOS x86_64 binary'
         required: true
         type: string
-      linux_sha256:
-        description: 'SHA256 for Linux binary'
+      macos_arm_sha256:
+        description: 'SHA256 for macOS ARM64 binary'
+        required: true
+        type: string
+      linux_x86_sha256:
+        description: 'SHA256 for Linux x86_64 binary'
+        required: true
+        type: string
+      linux_arm_sha256:
+        description: 'SHA256 for Linux ARM64 binary'
         required: true
         type: string
 
@@ -32,32 +40,72 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
             echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
-            echo "macos_sha256=${{ github.event.client_payload.macos_sha256 }}" >> $GITHUB_OUTPUT
-            echo "linux_sha256=${{ github.event.client_payload.linux_sha256 }}" >> $GITHUB_OUTPUT
+            echo "macos_x86_sha256=${{ github.event.client_payload.macos_x86_sha256 }}" >> $GITHUB_OUTPUT
+            echo "macos_arm_sha256=${{ github.event.client_payload.macos_arm_sha256 }}" >> $GITHUB_OUTPUT
+            echo "linux_x86_sha256=${{ github.event.client_payload.linux_x86_sha256 }}" >> $GITHUB_OUTPUT
+            echo "linux_arm_sha256=${{ github.event.client_payload.linux_arm_sha256 }}" >> $GITHUB_OUTPUT
           else
             echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-            echo "macos_sha256=${{ github.event.inputs.macos_sha256 }}" >> $GITHUB_OUTPUT
-            echo "linux_sha256=${{ github.event.inputs.linux_sha256 }}" >> $GITHUB_OUTPUT
+            echo "macos_x86_sha256=${{ github.event.inputs.macos_x86_sha256 }}" >> $GITHUB_OUTPUT
+            echo "macos_arm_sha256=${{ github.event.inputs.macos_arm_sha256 }}" >> $GITHUB_OUTPUT
+            echo "linux_x86_sha256=${{ github.event.inputs.linux_x86_sha256 }}" >> $GITHUB_OUTPUT
+            echo "linux_arm_sha256=${{ github.event.inputs.linux_arm_sha256 }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Update formula
         run: |
           VERSION="${{ steps.vars.outputs.version }}"
-          MACOS_SHA256="${{ steps.vars.outputs.macos_sha256 }}"
-          LINUX_SHA256="${{ steps.vars.outputs.linux_sha256 }}"
+          MACOS_X86_SHA256="${{ steps.vars.outputs.macos_x86_sha256 }}"
+          MACOS_ARM_SHA256="${{ steps.vars.outputs.macos_arm_sha256 }}"
+          LINUX_X86_SHA256="${{ steps.vars.outputs.linux_x86_sha256 }}"
+          LINUX_ARM_SHA256="${{ steps.vars.outputs.linux_arm_sha256 }}"
           
-          # Update version
-          sed -i "s/version \".*\"/version \"$VERSION\"/" Formula/solarboat.rb
+          cat > Formula/solarboat.rb << 'EOF'
+          class Solarboat < Formula
+            desc "Modern CLI for Infrastructure as Code and GitOps workflows"
+            homepage "https://solarboat.io"
+            version "VERSION_PLACEHOLDER"
+            license "BSD-3-Clause"
+
+            on_macos do
+              if Hardware::CPU.intel?
+                url "https://github.com/devqik/solarboat/releases/download/v#{version}/solarboat-x86_64-apple-darwin.tar.gz"
+                sha256 "MACOS_X86_SHA256_PLACEHOLDER"
+              elsif Hardware::CPU.arm?
+                url "https://github.com/devqik/solarboat/releases/download/v#{version}/solarboat-aarch64-apple-darwin.tar.gz"
+                sha256 "MACOS_ARM_SHA256_PLACEHOLDER"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.intel?
+                url "https://github.com/devqik/solarboat/releases/download/v#{version}/solarboat-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "LINUX_X86_SHA256_PLACEHOLDER"
+              elsif Hardware::CPU.arm?
+                url "https://github.com/devqik/solarboat/releases/download/v#{version}/solarboat-aarch64-unknown-linux-gnu.tar.gz"
+                sha256 "LINUX_ARM_SHA256_PLACEHOLDER"
+              end
+            end
+
+            def install
+              bin.install "solarboat"
+            end
+
+            test do
+              system "#{bin}/solarboat", "--help"
+            end
+          end
+          EOF
           
-          # Update macOS SHA256
-          sed -i "/if OS.mac?/,/elsif OS.linux?/ {
-            s/sha256 \".*\"/sha256 \"$MACOS_SHA256\"/
-          }" Formula/solarboat.rb
+          # Replace placeholders with actual values
+          sed -i "s/VERSION_PLACEHOLDER/$VERSION/" Formula/solarboat.rb
+          sed -i "s/MACOS_X86_SHA256_PLACEHOLDER/$MACOS_X86_SHA256/" Formula/solarboat.rb
+          sed -i "s/MACOS_ARM_SHA256_PLACEHOLDER/$MACOS_ARM_SHA256/" Formula/solarboat.rb
+          sed -i "s/LINUX_X86_SHA256_PLACEHOLDER/$LINUX_X86_SHA256/" Formula/solarboat.rb
+          sed -i "s/LINUX_ARM_SHA256_PLACEHOLDER/$LINUX_ARM_SHA256/" Formula/solarboat.rb
           
-          # Update Linux SHA256
-          sed -i "/elsif OS.linux?/,/end/ {
-            s/sha256 \".*\"/sha256 \"$LINUX_SHA256\"/
-          }" Formula/solarboat.rb
+          # Fix indentation (remove leading spaces from heredoc)
+          sed -i 's/^          //' Formula/solarboat.rb
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
@@ -70,9 +118,11 @@ jobs:
             
             **Changes:**
             - Version: `${{ steps.vars.outputs.version }}`
-            - macOS SHA256: `${{ steps.vars.outputs.macos_sha256 }}`
-            - Linux SHA256: `${{ steps.vars.outputs.linux_sha256 }}`
+            - macOS x86_64 SHA256: `${{ steps.vars.outputs.macos_x86_sha256 }}`
+            - macOS ARM64 SHA256: `${{ steps.vars.outputs.macos_arm_sha256 }}`
+            - Linux x86_64 SHA256: `${{ steps.vars.outputs.linux_x86_sha256 }}`
+            - Linux ARM64 SHA256: `${{ steps.vars.outputs.linux_arm_sha256 }}`
             
             This PR was created automatically by the update-formula workflow.
           branch: update-solarboat-${{ steps.vars.outputs.version }}
-          delete-branch: true 
+          delete-branch: true

@@ -1,19 +1,21 @@
 #!/bin/bash
 
 # Script to update Homebrew formula after a new release
-# Usage: ./update-homebrew.sh <version> <macos_sha256> <linux_sha256>
+# Usage: ./update-homebrew.sh <version> <macos_x86_sha256> <macos_arm_sha256> <linux_x86_sha256> <linux_arm_sha256>
 
 set -e
 
 VERSION=$1
-MACOS_SHA256=$2
-LINUX_SHA256=$3
+MACOS_X86_SHA256=$2
+MACOS_ARM_SHA256=$3
+LINUX_X86_SHA256=$4
+LINUX_ARM_SHA256=$5
 
-if [[ -z "$VERSION" || -z "$MACOS_SHA256" || -z "$LINUX_SHA256" ]]; then
-    echo "Usage: $0 <version> <macos_sha256> <linux_sha256>"
+if [[ -z "$VERSION" || -z "$MACOS_X86_SHA256" || -z "$MACOS_ARM_SHA256" || -z "$LINUX_X86_SHA256" || -z "$LINUX_ARM_SHA256" ]]; then
+    echo "Usage: $0 <version> <macos_x86_sha256> <macos_arm_sha256> <linux_x86_sha256> <linux_arm_sha256>"
     echo ""
     echo "Example:"
-    echo "  $0 0.7.3 abc123... def456..."
+    echo "  $0 0.8.0 abc123... def456... ghi789... jkl012..."
     exit 1
 fi
 
@@ -30,8 +32,10 @@ PAYLOAD=$(cat <<EOF
   "event_type": "update-formula",
   "client_payload": {
     "version": "$VERSION",
-    "macos_sha256": "$MACOS_SHA256",
-    "linux_sha256": "$LINUX_SHA256"
+    "macos_x86_sha256": "$MACOS_X86_SHA256",
+    "macos_arm_sha256": "$MACOS_ARM_SHA256",
+    "linux_x86_sha256": "$LINUX_X86_SHA256",
+    "linux_arm_sha256": "$LINUX_ARM_SHA256"
   }
 }
 EOF
@@ -46,7 +50,7 @@ if [[ -n "$GITHUB_TOKEN" ]]; then
         -H "Content-Type: application/json" \
         "$DISPATCH_URL" \
         -d "$PAYLOAD"
-    
+
     echo ""
     echo "✅ Repository dispatch event sent successfully!"
     echo "The Homebrew formula will be updated automatically."
@@ -61,4 +65,4 @@ else
     echo "  -H \"Content-Type: application/json\" \\"
     echo "  \"$DISPATCH_URL\" \\"
     echo "  -d '$PAYLOAD'"
-fi 
+fi

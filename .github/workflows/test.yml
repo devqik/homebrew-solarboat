@@ -17,7 +17,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          # Use Intel macOS until ARM binaries are available
+          - os: macos-13
+            arch: x86_64
+          - os: ubuntu-latest
+            arch: x86_64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     

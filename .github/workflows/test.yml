@@ -18,9 +18,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Use Intel macOS until ARM binaries are available
-          - os: macos-13
-            arch: x86_64
+          # macOS ARM64 (x86_64 binary runs via Rosetta 2 until ARM binaries exist)
+          - os: macos-latest
+            arch: arm64
           - os: ubuntu-latest
             arch: x86_64
     runs-on: ${{ matrix.os }}
@@ -63,5 +63,5 @@ jobs:
 
       - name: Audit formula
         run: |
-          # Run brew audit to check for issues (continue on error for now)
+          # Run brew audit (architecture warning expected until ARM binaries exist)
           brew audit --strict devqik/solarboat/solarboat || true

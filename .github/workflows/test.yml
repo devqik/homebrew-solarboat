@@ -35,14 +35,20 @@ jobs:
         run: |
           brew update
 
+      - name: Tap local repository
+        run: |
+          # Create a tap from the local checkout
+          mkdir -p $(brew --repository)/Library/Taps/devqik
+          ln -s $GITHUB_WORKSPACE $(brew --repository)/Library/Taps/devqik/homebrew-solarboat
+
       - name: Install formula
         run: |
-          brew install --formula ./Formula/solarboat.rb
+          brew install devqik/solarboat/solarboat
 
       - name: Test formula
         run: |
           # Test that the binary was installed correctly
-          brew test solarboat
+          brew test devqik/solarboat/solarboat
           
           # Test that the binary can run
           solarboat --help
@@ -53,4 +59,4 @@ jobs:
       - name: Audit formula
         run: |
           # Run brew audit to check for issues (continue on error for now)
-          brew audit --strict ./Formula/solarboat.rb || true
+          brew audit --strict devqik/solarboat/solarboat || true
